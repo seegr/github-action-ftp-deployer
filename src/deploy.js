@@ -8,7 +8,7 @@ const {getArgs} = require("./store");
 
 const processWithFlush = async (client, toUpload) => {
   let operationCount = 0;
-  const flushThreshold = 1;
+  const flushThreshold = 5;
 
   for (const folder of toUpload.folders) {
     try {
@@ -21,7 +21,7 @@ const processWithFlush = async (client, toUpload) => {
       if (operationCount % flushThreshold === 0) {
         await updateServerState(client, getTempStatePath());
       }
-      await delay(3000)
+      // await delay(3000)
     } catch (error) {
       logError(`Failed to create folder "${folder}": ${error.message}`, error);
     }
@@ -29,7 +29,7 @@ const processWithFlush = async (client, toUpload) => {
 
   for (const file of toUpload.files) {
     try {
-      logInfo(`Uploading file: ${file.local} to ${file.remote}`);
+      logText(`Uploading file: ${file.local} to ${file.remote}`);
       await client.uploadFrom(file.local, file.remote);
       logSuccess(`File uploaded: ${file.remote}`);
 
@@ -39,7 +39,7 @@ const processWithFlush = async (client, toUpload) => {
       if (operationCount % flushThreshold === 0) {
         await updateServerState(client, getTempStatePath());
       }
-      await delay(3000)
+      // await delay(3000)
     } catch (error) {
       logError(`Failed to upload file "${file.local}": ${error.message}`, error);
     }

@@ -19,6 +19,9 @@ inputs:
   state-name:
     description: 'Name of the state file to use'
     required: true
+  exclude:
+    description: 'Glob patterns for files and directories to exclude'
+    required: false
 runs:
   using: 'node16'
   main: 'bin/deploy.js'

@@ -19,3 +19,7 @@ jobs:
           local-dir: 'test-files'
           server-dir: './subdom/deployer-test/test-files'
           state-name: '.test-deploy-state.json'
+          exclude: |
+            .idea/**
+            **/.git*
+            xxx/**

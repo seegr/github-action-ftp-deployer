@@ -13,6 +13,7 @@ const inputs = {
   serverDir: core.getInput('server-dir'),
   stateName: core.getInput('state-name') || '.deploy-sync-state.json',
   timeout: parseInt(core.getInput('timeout')) || 3600000,
+  exclude: core.getInput('exclude'),
 };
 
 // Spuštění nasazení

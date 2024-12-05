@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const minimatch = require('minimatch')
 const { logInfo, logError, logWarning, logSuccess, logText, logAlert} = require('./logger');
 const crypto = require("crypto");
 const { safeFtpOperation, jumpToRoot } = require('./ftp')
@@ -12,6 +13,26 @@ const tempState = {
   version: "1.0.0",
   generatedTime: new Date().getTime(),
   data: [],
+};
+
+const normalizePath = (filePath) => {
+  return filePath.replace(/^(\.\/|\/|\.{2}\/)+/, ''); // Odstraní './', '/', '../' na začátku
+};
+
+const isExcluded = (filePath, excludePatterns) => {
+  const normalizedPath = normalizePath(filePath);
+  return excludePatterns.some((pattern) =>
+    minimatch(normalizedPath, pattern) || minimatch(normalizedPath + '/', pattern)
+  );
+};
+
+const prepareExcludePatterns = (excludeArg) => {
+  return excludeArg
+    ? excludeArg
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((pattern) => pattern.length > 0)
+    : [];
 };
 
 async function updateTempState(item) {
@@ -111,8 +132,9 @@ const getIdFromRemotePath = (remotePath) => {
 }
 
 async function setLocalState() {
-  const localContent = scanLocalDir()
-  const stateFilePath = getLocalStatePath()
+  const args = getArgs()
+  const localContent = scanLocalDir();
+  const stateFilePath = getLocalStatePath();
 
   if (fs.existsSync(stateFilePath)) {
     fs.unlink(stateFilePath, (err) => {
@@ -122,10 +144,10 @@ async function setLocalState() {
     });
   }
 
-  const localDir = getLocalDir()
-  const serverDir = getServerDir()
+  const localDir = getLocalDir();
+  const serverDir = getServerDir();
   const rootPath = getRootPath();
-  const remotePath = serverDir.startsWith('./') ? serverDir.replace('./', '/') : serverDir
+  const remotePath = serverDir.startsWith('./') ? serverDir.replace('./', '/') : serverDir;
 
   let state = {
     description: "State for tracking uploaded files and folders",
@@ -134,14 +156,29 @@ async function setLocalState() {
     data: [],
   };
 
+  const excludePatterns = prepareExcludePatterns(args.exclude);
+
+  const filteredFolders = localContent.folders.filter((folder) => {
+    const excluded = isExcluded(folder.remote, excludePatterns);
+    return !excluded;
+  });
+
+  const filteredFiles = localContent.files.filter((file) => {
+    const excluded = isExcluded(file.remote, excludePatterns);
+    return !excluded;
+  });
+
+  localContent.folders = filteredFolders;
+  localContent.files = filteredFiles;
+
   for (const folder of localContent.folders) {
     if (!state.data.some((item) => item.type === 'folder' && item.name === folder.remote)) {
-      const folderRemote = `${remotePath}/${folder.remote}`
+      const folderRemote = `${remotePath}/${folder.remote}`;
 
       state.data.push({
         type: 'folder',
         id: getIdFromRemotePath(folderRemote),
-        remote: folderRemote
+        remote: folderRemote,
       });
     }
   }
@@ -159,14 +196,14 @@ async function setLocalState() {
         state.data[existingFileIndex].hash = hash;
       }
     } else {
-      const fileRemote = `${remotePath}/${file.remote}`
+      const fileRemote = `${remotePath}/${file.remote}`;
       state.data.push({
         type: 'file',
         id: getIdFromRemotePath(fileRemote),
         local: path.resolve(localPath),
         remote: fileRemote,
         hash,
-      })
+      });
     }
   }
 
