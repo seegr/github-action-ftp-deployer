@@ -9,16 +9,22 @@ const getLocalStatePath = () => {
   return `${getRootPath()}/${args.localDir}/${args.stateName}`
 }
 
-const getServerPath = () => {
+const getServerDir = () => {
   const args = getArgs()
 
   return args.serverDir
 }
 
+const getLocalDir = () => {
+  const args = getArgs()
+
+  return args.localDir
+}
+
 const getServerStatePath = () => {
   const args = getArgs()
 
-  const serverDir = getServerPath();
+  const serverDir = getServerDir();
   return `/${path.join(serverDir, args.stateName)}`;
 };
 
@@ -27,4 +33,4 @@ const getTempStatePath = () => {
 }
 
 
-module.exports = { getRootPath, getServerPath, getLocalStatePath, getServerStatePath, getTempStatePath };
+module.exports = { getRootPath, getServerDir, getLocalStatePath, getServerStatePath, getTempStatePath, getLocalDir };

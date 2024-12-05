@@ -1,19 +1,6 @@
 {
     "description": "Temporary state for in-progress sync",
     "version": "1.0.0",
-    "generatedTime": 1733417610911,
-    "data": [
-        {
-            "type": "file",
-            "name": "/subdom/deployer-test/test-files/tralala/qwewq.txt",
-            "size": 15,
-            "hash": "581ddfdaa6a584888b251aca46f032751ee189379c8b3b2c24ea93097b42b4db"
-        },
-        {
-            "type": "file",
-            "name": "/subdom/deployer-test/test-files/tralala/dfgdfg.txt",
-            "size": 18,
-            "hash": "349405b5ace2c206dab9a2e2060e5b99418bd7bf815cfbf030e10c86847c6aa8"
-        }
-    ]
+    "generatedTime": 1733439866400,
+    "data": []
 }

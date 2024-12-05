@@ -2,6 +2,7 @@
 
 const core = require('@actions/core');
 const ftpDeploy = require('../src/ftpDeploy');
+const { logSuccess, logAlert} = require('../src/logger')
 
 // Načtení vstupů z prostředí GitHub Actions
 const inputs = {
@@ -16,5 +17,5 @@ const inputs = {
 
 // Spuštění nasazení
 ftpDeploy.deploy(inputs)
-  .then(() => core.info('Deployment completed successfully!'))
-  .catch((error) => core.setFailed(`Deployment failed: ${error.message}`));
+  .then(() => logSuccess('💩🎉 Deployment completed successfully!!!'))
+  .catch((error) => logAlert(`💩😞 Deployment failed: ${error.message}`));

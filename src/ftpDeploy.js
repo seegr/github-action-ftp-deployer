@@ -1,10 +1,10 @@
 const path = require('path');
 const fs = require('fs');
 const ftp = require('basic-ftp');
-const { logInfo, logWarning } = require('./logger');
+const { logText, logInfo, logWarning, logAlert} = require('./logger');
 const { prepareUploads, processWithFlush} = require('./deploy');
 const { connectToFtp } = require('./ftp');
-const { initUploadsFromStates } = require('./state')
+const { setLocalState, initUploadsFromStates } = require('./state')
 
 const { setArgs } = require('./store');
 
@@ -22,15 +22,27 @@ async function deploy(args) {
         await client.close();
       }
     } catch (error) {
-      console.error('Failed to close FTP connection:', error);
+      logAlert('📂😞 Failed to close FTP connection:', error);
     }
     process.exit(0);
   });
 
   try {
+    logInfo('Nazdárek 🖖💩 ... tak jdeme na to!')
+
     await connectToFtp(client, args);
+    await client.ensureDir(args.serverDir);
+    await setLocalState()
     const toUpload = await initUploadsFromStates(client, args);
-    console.log(toUpload)
+
+    toUpload.folders.map(item => {
+      logText(`📁 Create: ${item.id}`);
+    });
+
+    toUpload.files.map(item => {
+      logText(`📄 Upload: ${item.id}`);
+    });
+
     await processWithFlush(client, toUpload, args);
   } catch (error) {
     throw new Error(`Deployment failed: ${error.message}`);

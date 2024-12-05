@@ -1,10 +1,10 @@
-const {logError, logInfo} = require("./logger");
+const {logError, logInfo, logWarning, logText, logSuccess} = require("./logger");
 const {getArgs} = require("./store");
-const {getServerPath} = require("./paths");
+const {getServerDir} = require("./paths");
 
 async function connectToFtp(client, args, attempt = 3) {
   try {
-    logInfo(`Connecting to FTP server (attempt ${attempt})...`);
+    logText(`📂 Connecting to FTP server (attempt ${attempt})...`);
 
     await client.access({
       host: args.server,
@@ -14,20 +14,20 @@ async function connectToFtp(client, args, attempt = 3) {
       secureOptions: { rejectUnauthorized: false },
     });
 
-    logInfo('FTP connection established successfully.');
+    logSuccess('📂🗄 FTP connection established successfully.');
   } catch (error) {
     if (attempt < 3) {
-      logError(`Connection failed (attempt ${attempt}): ${error.message}`, error);
-      logInfo('Retrying connection...');
+      logError(`📂😞 Connection failed (attempt ${attempt}): ${error.message}`, error);
+      logWarning('🥹 Retrying connection...');
 
       return connectToFtp(client, args, attempt + 1);
     } else {
-      throw new Error(`Failed to connect to FTP server after 3 attempts: ${error.message}`);
+      throw new Error(`📂😞😞 Failed to connect to FTP server after 3 attempts: ${error.message}`);
     }
   }
 }
 
-async function safeFtpOperation(client, operation, retries = 3) {
+async function safeFtpOperation(client, operation, retries = 4) {
   const args = getArgs()
 
   let attempt = 0;
@@ -40,17 +40,16 @@ async function safeFtpOperation(client, operation, retries = 3) {
     } catch (error) {
       // Pokud je chyba spojená s připojením, pokus se o reconnect
       if (error.message.includes('Client is closed') || error.message.includes('disconnected')) {
-        logError(`FTP operation failed (attempt ${attempt}): ${error.message}`);
+        logError(`📂😞 FTP operation failed (attempt ${attempt}): ${error.message}`);
         if (attempt < retries) {
-          logInfo('Reconnecting to FTP server...');
+          logWarning('🥹 Reconnecting to FTP server...');
           await connectToFtp(client, args);
-          logInfo('Retrying FTP operation...');
+          logWarning('🥹 Retrying FTP operation...');
         } else {
-          logError('Maximum retry attempts reached. Failing operation.');
-          throw error; // Po třetím pokusu ukonči s chybou
+          logError('📂😞😞 Maximum retry attempts reached. Failing operation.');
+          throw error;
         }
       } else {
-        // Pokud chyba nesouvisí s připojením, předej ji dál
         throw error;
       }
     }
@@ -58,9 +57,8 @@ async function safeFtpOperation(client, operation, retries = 3) {
 }
 
 async function jumpToRoot(client) {
-  logInfo(`Jumping to root: ${getServerPath()}`);
   await client.cd('/'); // Jdi na root
-  await client.cd(getServerPath());
+  await client.cd(getServerDir());
 }
 
 module.exports = { connectToFtp, safeFtpOperation, jumpToRoot }
