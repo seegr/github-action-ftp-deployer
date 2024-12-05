@@ -1,0 +1,15 @@
+{
+  "name": "ftp-deployer-action",
+  "version": "1.0.0",
+  "main": "bin/deploy.js",
+  "bin": {
+    "deploy": "./bin/deploy.js"
+  },
+  "scripts": {
+    "workflow-test": "act -j deploy-test -W .github/workflows/deploy.yml --bind --container-architecture linux/amd64"
+  },
+  "dependencies": {
+    "@actions/core": "^1.10.0",
+    "basic-ftp": "^5.0.2"
+  }
+}

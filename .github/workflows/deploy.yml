@@ -1,0 +1,21 @@
+name: Test FTP Deploy Action
+
+on:
+  workflow_dispatch: # Ruční spuštění
+
+jobs:
+  deploy-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Run FTP Deploy
+        uses: ./ # Odkaz na lokální akci
+        with:
+          server: php82.visu.cz.uvds131.active24.cz
+          username: php82visuc1
+          password: MCrO12hrVV
+          local-dir: 'test-files'
+          server-dir: './subdom/deployer-test/test-files'
+          state-name: '.test-deploy-state.json'

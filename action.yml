@@ -1,0 +1,24 @@
+name: FTP Deploy Action
+description: Deploy files to an FTP server.
+inputs:
+  server:
+    description: 'FTP server hostname'
+    required: true
+  username:
+    description: 'FTP username'
+    required: true
+  password:
+    description: 'FTP password'
+    required: true
+  local-dir:
+    description: 'Local directory to upload'
+    required: true
+  server-dir:
+    description: 'Target directory on the FTP server'
+    required: true
+  state-name:
+    description: 'Name of the state file to use'
+    required: true
+runs:
+  using: 'node16'
+  main: 'bin/deploy.js'
