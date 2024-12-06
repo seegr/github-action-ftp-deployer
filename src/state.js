@@ -6,17 +6,13 @@ const crypto = require("crypto");
 const { safeFtpOperation, jumpToRoot } = require('./ftp')
 const {getRootPath, getLocalDir, getServerDir, getLocalStatePath, getServerStatePath, getTempStatePath} = require("./paths");
 const {getArgs} = require("./store");
-const { jsonToConsole } = require("./utils")
+const { jsonToConsole, normalizePath } = require("./utils")
 
 const tempState = {
   description: "Temporary state for in-progress sync",
   version: "1.0.0",
   generatedTime: new Date().getTime(),
   data: [],
-};
-
-const normalizePath = (filePath) => {
-  return filePath.replace(/^(\.\/|\/|\.{2}\/)+/, ''); // Odstraní './', '/', '../' na začátku
 };
 
 const isExcluded = (filePath, excludePatterns) => {
@@ -45,6 +41,21 @@ async function updateTempState(item) {
   fs.writeFileSync(tempStatePath, tempStateContent, 'utf8');
 }
 
+
+async function remoteTempStataFromLocal(item) {
+  const tempStatePath = getTempStatePath();
+
+  if (fs.existsSync(tempStatePath)) {
+    try {
+      logInfo(`Removing old temp state file: ${tempStatePath}`);
+      await fs.promises.unlink(tempStatePath);
+      logInfo('Old temp state file removed.');
+    } catch (err) {
+      logAlert(`Error removing old state: ${err.message}`);
+    }
+  }
+}
+
 const calculateHash = (filePath) => {
   const fileBuffer = fs.readFileSync(filePath);
   const hash = crypto.createHash('sha256');
@@ -57,7 +68,7 @@ const calculateHash = (filePath) => {
 const updateServerState = async (client, localStatePath) => {
   const serverStatePath = getServerStatePath()
   const serverDir = getServerDir()
-  const remotePath = `/${path.join(serverDir, serverStatePath)}`;
+  const remotePath = `${path.join(serverDir, serverStatePath)}`;
 
   try {
     await jumpToRoot(client);
@@ -87,7 +98,7 @@ const scanLocalDir = () => {
       const id = entry.name
       const fullPath = path.join(dir, entry.name);
       const relativePath = path.relative(localDir, fullPath);
-      const remotePath = `${path.join(relativePath)}`;
+      const remotePath = normalizePath(`${path.join(relativePath)}`)
 
       if (entry.name === args.stateName) {
         continue;
@@ -105,9 +116,11 @@ const scanLocalDir = () => {
           logError(`Failed to scan directory "${fullPath}": ${error.message}`, error);
         }
       } else {
+        logInfo(`pushing file: ${id}`)
+        logInfo(`fullPath: ${fullPath}`)
         filesToUpload.push({
           id,
-          local: fullPath,
+          local: `${fullPath}`,
           remote: remotePath
         });
       }
@@ -128,7 +141,7 @@ const getIdFromRemotePath = (remotePath) => {
   remotePath = remotePath.replace(serverDir, '')
   remotePath = remotePath.replace(/^\/+/, '');
 
-  return `${getLocalDir()}/${remotePath}`
+  return normalizePath(`${getLocalDir()}/${remotePath}`)
 }
 
 async function setLocalState() {
@@ -137,11 +150,13 @@ async function setLocalState() {
   const stateFilePath = getLocalStatePath();
 
   if (fs.existsSync(stateFilePath)) {
-    fs.unlink(stateFilePath, (err) => {
-      if (err) {
-        logAlert(`Error removing old state: ${err}`);
-      }
-    });
+    try {
+      logInfo(`Removing old state file: ${stateFilePath}`);
+      await fs.promises.unlink(stateFilePath);
+      logInfo('Old state file removed.');
+    } catch (err) {
+      logAlert(`Error removing old state: ${err.message}`);
+    }
   }
 
   const localDir = getLocalDir();
@@ -189,18 +204,16 @@ async function setLocalState() {
       (item) => item.type === 'file' && item.name === file.remote
     );
 
-    const localPath = path.join(rootPath, localDir, file.remote);
 
     if (existingFileIndex !== -1) {
       if (state.data[existingFileIndex].hash !== hash) {
         state.data[existingFileIndex].hash = hash;
       }
     } else {
-      const fileRemote = `${remotePath}/${file.remote}`;
+      const fileRemote = normalizePath(`${remotePath}/${file.remote}`);
       state.data.push({
         type: 'file',
         id: getIdFromRemotePath(fileRemote),
-        local: path.resolve(localPath),
         remote: fileRemote,
         hash,
       });
@@ -208,10 +221,13 @@ async function setLocalState() {
   }
 
   // Write updated state to file
+  logInfo('Saving local state')
   fs.writeFileSync(stateFilePath, JSON.stringify(state, null, 2), 'utf-8');
+  logInfo('Local state saved')
 }
 
 const initUploadsFromStates = async (client) => {
+  logInfo('initUploadsFromStates...')
   const tempStatePath = getTempStatePath();
   let serverState = { data: [] };
 
@@ -239,12 +255,17 @@ const initUploadsFromStates = async (client) => {
     files: []
   };
 
-  const serverPaths = new Set(serverState.data.map((item) => item.id));
+  // logInfo(`serverState: ${jsonToConsole(serverState)}`)
+
+  const serverPaths = new Set(serverState.data.map((item) => item.remote));
   const localPaths = localState.data;
+
+  // logInfo(`serverPaths: ${jsonToConsole(Array.from(serverPaths))}`);
 
   // Přidání složek k uploadu
   localPaths.filter((item) => item.type === 'folder').forEach((folder) => {
-    if (!serverPaths.has(folder.id)) {
+    // console.log(folder.remote)
+    if (!serverPaths.has(folder.remote)) {
       toUpload.folders.push(folder);
     }
   });

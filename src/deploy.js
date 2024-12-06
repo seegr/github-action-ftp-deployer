@@ -2,11 +2,11 @@ const fs = require('fs');
 const path = require('path');
 const { logInfo, logSuccess, logError, logText} = require('./logger');
 const { updateLocalStateFile, updateServerState, updateTempState, calculateHash } = require('./state')
-const {getRootPath, getLocalStatePath, getServerStatePath, getTempStatePath, getServerDir} = require("./paths");
+const {getRootPath, getLocalStatePath, getServerStatePath, getTempStatePath, getServerDir, getLocalDir} = require("./paths");
 const { jumpToRoot, safeFtpOperation } = require("./ftp")
 const {getArgs} = require("./store");
+const { normalizePath } = require("./utils");
 
-const normalizePath = (path) => path.replace(/\/+/g, '/').replace(/^\.\//, '/');
 
 const processWithFlush = async (client, toUpload) => {
   let operationCount = 0;
@@ -14,49 +14,47 @@ const processWithFlush = async (client, toUpload) => {
 
   // Zpracování složek
   for (const folder of toUpload.folders) {
-    const folderPath = normalizePath(folder.remote)
-
     try {
-      logInfo(`📁 Creating folder: ${folderPath}`);
+      logInfo(`📁 Creating folder: ${folder.id}`);
       await safeFtpOperation(client, async (ftpClient) => {
-        await ftpClient.ensureDir(folderPath);
+        await ftpClient.ensureDir(folder.remote);
       });
       await updateTempState(folder)
-      logInfo(`📁 Folder created: ${folderPath}`);
+      logInfo(`📁 Folder created: ${folder.id}`);
       operationCount++;
 
       if (operationCount % flushThreshold === 0) {
         await updateServerState(client, getTempStatePath());
       }
     } catch (error) {
-      logError(`Failed to create folder "${folderPath}": ${error.message}`);
+      logError(`Failed to create folder "${folder.id}": ${error.message}`);
     }
   }
 
   // Zpracování souborů
   for (const file of toUpload.files) {
-    const filePath = normalizePath(file.remote)
+    const localPath = `${getRootPath()}/${file.id}`
 
     try {
-      logInfo(`📄 Uploading file: ${file.local} to ${filePath}`);
+      logInfo(`📄 Uploading file: ${localPath} -> ${file.id}`);
       await safeFtpOperation(client, async (ftpClient) => {
-        await ftpClient.uploadFrom(file.local, filePath);
+        await ftpClient.uploadFrom(localPath, `/${file.remote}`);
       });
       await updateTempState(file)
-      logInfo(`📄 File uploaded: ${filePath}`);
+      logInfo(`📄 File uploaded: ${file.id}`);
       operationCount++;
 
       if (operationCount % flushThreshold === 0) {
         await updateServerState(client, getTempStatePath());
       }
     } catch (error) {
-      logError(`Failed to upload file "${filePath}": ${error.message}`);
+      logError(`Failed to upload file "${localPath}": ${error.message}`);
     }
   }
 
   // Final flush
   logInfo('📂 Finalizing: Uploading state file to server...');
-  await updateServerState(client, getTempStatePath());
+  await updateServerState(client, getLocalStatePath());
 };
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
