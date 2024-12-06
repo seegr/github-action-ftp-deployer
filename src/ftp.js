@@ -2,7 +2,7 @@ const {logError, logInfo, logWarning, logText, logSuccess} = require("./logger")
 const {getArgs} = require("./store");
 const {getServerDir} = require("./paths");
 
-let noopInterval = null;
+// let noopInterval = null;
 
 async function connectToFtp(client, args, attempt = 3) {
   try {
@@ -19,7 +19,7 @@ async function connectToFtp(client, args, attempt = 3) {
     logSuccess('📂🗄 FTP connection established successfully.');
 
     // Start NOOP to keep the connection alive
-    noopInterval = startKeepAlive(client);
+    // noopInterval = startKeepAlive(client);
   } catch (error) {
     if (attempt < 3) {
       logError(`📂😞 Connection failed (attempt ${attempt}): ${error.message}`, error);
@@ -33,33 +33,33 @@ async function connectToFtp(client, args, attempt = 3) {
 }
 
 async function disconnectFromFtp(client) {
-  if (noopInterval) {
-    stopKeepAlive(noopInterval);
-  }
+  // if (noopInterval) {
+  //   stopKeepAlive(noopInterval);
+  // }
   client.close();
   logInfo('📂 Disconnected from FTP server.');
 }
 
-function startKeepAlive(client, interval = 20000) {
-  logInfo('🟢 Starting keep-alive (NOOP)...');
-  return setInterval(async () => {
-    try {
-      logInfo('🔄 Sending NOOP...');
-      await safeFtpOperation(client, async (ftpClient) => {
-        await ftpClient.send("NOOP");
-      });
-    } catch (error) {
-      logWarning(`⚠️ Failed to send NOOP: ${error.message}`);
-    }
-  }, interval);
-}
+// function startKeepAlive(client, interval = 20000) {
+//   logInfo('🟢 Starting keep-alive (NOOP)...');
+//   return setInterval(async () => {
+//     try {
+//       logInfo('🔄 Sending NOOP...');
+//       await safeFtpOperation(client, async (ftpClient) => {
+//         await ftpClient.send("NOOP");
+//       });
+//     } catch (error) {
+//       logWarning(`⚠️ Failed to send NOOP: ${error.message}`);
+//     }
+//   }, interval);
+// }
 
-function stopKeepAlive(noopInterval) {
-  clearInterval(noopInterval);
-  logInfo('🔴 Stopping keep-alive (NOOP).');
-}
+// function stopKeepAlive(noopInterval) {
+//   clearInterval(noopInterval);
+//   logInfo('🔴 Stopping keep-alive (NOOP).');
+// }
 
-let ftpTaskQueue = Promise.resolve(); // Fronta úloh
+// let ftpTaskQueue = Promise.resolve(); // Fronta úloh
 
 async function safeFtpOperation(client, operation, retries = 4) {
   const args = getArgs();
@@ -69,16 +69,23 @@ async function safeFtpOperation(client, operation, retries = 4) {
     try {
       attempt++;
       logInfo(`Starting FTP operation (attempt ${attempt})...`);
-      return await operation(client);
+      const result = await operation(client); // Vždy použij `await`
+      logInfo(`FTP operation succeeded (attempt ${attempt}).`);
+      return result;
     } catch (error) {
-      logError(`📂😞 FTP operation failed (attempt ${attempt}): ${error.message}`);
-      if (error.message.includes('ECONNRESET') || error.message.includes('Client is closed')) {
+      if (
+        error.message.includes('Client is closed') ||
+        error.message.includes('disconnected') ||
+        error.message.includes('User launched a task')
+      ) {
+        logError(`📂😞 FTP operation failed (attempt ${attempt}): ${error.message}`);
         if (attempt < retries) {
           logWarning('🥹 Reconnecting to FTP server...');
           await connectToFtp(client, args);
           logWarning('🥹 Retrying FTP operation...');
         } else {
-          throw new Error(`📂😞😞 Maximum retry attempts reached: ${error.message}`);
+          logError('📂😞😞 Maximum retry attempts reached. Failing operation.');
+          throw error;
         }
       } else {
         throw error;
