@@ -68,9 +68,9 @@ async function safeFtpOperation(client, operation, retries = 4) {
   while (attempt < retries) {
     try {
       attempt++;
-      logInfo(`Starting FTP operation (attempt ${attempt})...`);
+      // logInfo(`Starting FTP operation (attempt ${attempt})...`);
       const result = await operation(client); // Vždy použij `await`
-      logInfo(`FTP operation succeeded (attempt ${attempt}).`);
+      // logInfo(`FTP operation succeeded (attempt ${attempt}).`);
       return result;
     } catch (error) {
       if (

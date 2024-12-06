@@ -21,6 +21,7 @@ const processWithFlush = async (client, toUpload) => {
       await safeFtpOperation(client, async (ftpClient) => {
         await ftpClient.ensureDir(folderPath);
       });
+      await updateTempState(folder)
       logInfo(`📁 Folder created: ${folderPath}`);
       operationCount++;
 
@@ -41,6 +42,7 @@ const processWithFlush = async (client, toUpload) => {
       await safeFtpOperation(client, async (ftpClient) => {
         await ftpClient.uploadFrom(file.local, filePath);
       });
+      await updateTempState(file)
       logInfo(`📄 File uploaded: ${filePath}`);
       operationCount++;
 
