@@ -10,7 +10,7 @@ function logInfo(message) {
 }
 
 function logSuccess(message) {
-  core.info(`\x1b[36m${message}\x1b[0m`)
+  core.info(`\x1b[32m${message}\x1b[0m`)
 }
 
 function logAlert(message) {

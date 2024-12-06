@@ -15,12 +15,12 @@ const processWithFlush = async (client, toUpload) => {
   // Zpracování složek
   for (const folder of toUpload.folders) {
     try {
-      logInfo(`📁 Creating folder: ${folder.id}`);
+      logText(`📁 Creating folder: ${folder.id}`);
       await safeFtpOperation(client, async (ftpClient) => {
         await ftpClient.ensureDir(folder.remote);
       });
       await updateTempState(folder)
-      logInfo(`📁 Folder created: ${folder.id}`);
+      logSuccess(`📁 Folder created: ${folder.id}`);
       operationCount++;
 
       if (operationCount % flushThreshold === 0) {
@@ -41,7 +41,7 @@ const processWithFlush = async (client, toUpload) => {
         await ftpClient.uploadFrom(localPath, `/${file.remote}`);
       });
       await updateTempState(file)
-      logInfo(`📄 File uploaded: ${file.id}`);
+      logSuccess(`📄 File uploaded: ${file.id}`);
       operationCount++;
 
       if (operationCount % flushThreshold === 0) {

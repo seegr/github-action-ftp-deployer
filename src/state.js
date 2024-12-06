@@ -72,7 +72,7 @@ const updateServerState = async (client, localStatePath) => {
 
   try {
     await jumpToRoot(client);
-    logText(`Uploading state file to server: ${localStatePath} -> ${remotePath}`);
+    logInfo(`Updating state file on server`);
 
     await safeFtpOperation(client, async (ftpClient) => {
       await ftpClient.uploadFrom(localStatePath, serverStatePath);
@@ -116,8 +116,6 @@ const scanLocalDir = () => {
           logError(`Failed to scan directory "${fullPath}": ${error.message}`, error);
         }
       } else {
-        logInfo(`pushing file: ${id}`)
-        logInfo(`fullPath: ${fullPath}`)
         filesToUpload.push({
           id,
           local: `${fullPath}`,
