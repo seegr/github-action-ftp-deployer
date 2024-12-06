@@ -3,7 +3,7 @@ const fs = require('fs');
 const ftp = require('basic-ftp');
 const { logText, logInfo, logWarning, logAlert} = require('./logger');
 const { prepareUploads, processWithFlush} = require('./deploy');
-const { connectToFtp } = require('./ftp');
+const { connectToFtp, disconnectFromFtp } = require('./ftp');
 const { setLocalState, initUploadsFromStates } = require('./state')
 
 const { setArgs } = require('./store');
@@ -44,6 +44,7 @@ async function deploy(args) {
     });
 
     await processWithFlush(client, toUpload, args);
+    await disconnectFromFtp(client)
   } catch (error) {
     throw new Error(`Deployment failed: ${error.message}`);
   } finally {
