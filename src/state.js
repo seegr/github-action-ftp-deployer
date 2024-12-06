@@ -72,8 +72,6 @@ const calculateHash = (filePath) => {
 
 const updateServerState = async (client, localStatePath) => {
   const serverStatePath = getServerStatePath()
-  const serverDir = getServerDir()
-  const remotePath = `${path.join(serverDir, serverStatePath)}`;
 
   try {
     await jumpToRoot(client);
@@ -89,24 +87,31 @@ const updateServerState = async (client, localStatePath) => {
 };
 
 const scanLocalDir = () => {
-  const args = getArgs()
-  const localDir = `${getRootPath()}/${args.localDir}`
-  const serverDir = args.serverDir
+  const args = getArgs();
+  const localDir = `${getRootPath()}/${args.localDir}`;
+  const serverDir = args.serverDir;
 
-  const foldersToCreate = []
-  const filesToUpload = []
+  const foldersToCreate = [];
+  const filesToUpload = [];
+  const excludePatterns = prepareExcludePatterns(args.exclude);
 
   const scanDir = (dir) => {
     const entries = fs.readdirSync(dir, { withFileTypes: true });
 
     for (const entry of entries) {
-      const id = entry.name
+      const id = entry.name;
       const fullPath = path.join(dir, entry.name);
       const relativePath = path.relative(localDir, fullPath);
-      const remotePath = normalizePath(`${path.join(relativePath)}`)
+      const remotePath = normalizePath(`${path.join(relativePath)}`);
 
       if (entry.name === args.stateName) {
-        continue;
+        continue; // Ignorovat state file
+      }
+
+      // Kontrola na exclude
+      if (isExcluded(remotePath, excludePatterns)) {
+        logInfo(`Excluded: ${remotePath}`);
+        continue; // Přeskočit položky, které odpovídají exclude patternům
       }
 
       if (entry.isDirectory()) {
@@ -116,7 +121,7 @@ const scanLocalDir = () => {
         });
 
         try {
-          scanDir(fullPath, serverDir);
+          scanDir(fullPath, serverDir); // Rekurzivní zpracování
         } catch (error) {
           logError(`Failed to scan directory "${fullPath}": ${error.message}`, error);
         }
@@ -130,13 +135,13 @@ const scanLocalDir = () => {
     }
   };
 
-  scanDir(localDir)
+  scanDir(localDir);
 
   return {
     folders: foldersToCreate,
     files: filesToUpload
-  }
-}
+  };
+};
 
 const getIdFromRemotePath = (remotePath) => {
   let serverDir = getServerDir()
@@ -173,22 +178,6 @@ async function setLocalState() {
     generatedTime: Date.now(),
     data: [],
   };
-
-  const excludePatterns = prepareExcludePatterns(args.exclude);
-  logInfo(`excludePatterns: ${excludePatterns}`)
-
-  const filteredFolders = localContent.folders.filter((folder) => {
-    const excluded = isExcluded(folder.remote, excludePatterns);
-    return !excluded;
-  });
-
-  const filteredFiles = localContent.files.filter((file) => {
-    const excluded = isExcluded(file.remote, excludePatterns);
-    return !excluded;
-  });
-
-  localContent.folders = filteredFolders;
-  localContent.files = filteredFiles;
 
   for (const folder of localContent.folders) {
     if (!state.data.some((item) => item.type === 'folder' && item.name === folder.remote)) {
