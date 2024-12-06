@@ -45,7 +45,9 @@ function startKeepAlive(client, interval = 20000) {
   return setInterval(async () => {
     try {
       logInfo('🔄 Sending NOOP...');
-      await client.send('NOOP');
+      await safeFtpOperation(client, async (ftpClient) => {
+        await ftpClient.send("NOOP");
+      });
     } catch (error) {
       logWarning(`⚠️ Failed to send NOOP: ${error.message}`);
     }
@@ -57,29 +59,35 @@ function stopKeepAlive(noopInterval) {
   logInfo('🔴 Stopping keep-alive (NOOP).');
 }
 
-async function safeFtpOperation(client, operation, retries = 3) {
-  const args = getArgs();
-  let attempt = 0;
+let ftpTaskQueue = Promise.resolve(); // Fronta úloh
 
-  while (attempt < retries) {
-    try {
-      attempt++;
-      return await operation(client); // Každá operace musí mít `await`
-    } catch (error) {
-      if (error.message.includes('Client is closed') || error.message.includes('disconnected')) {
-        logError(`📂😞 FTP operation failed (attempt ${attempt}): ${error.message}`);
-        if (attempt < retries) {
-          logWarning('🥹 Reconnecting to FTP server...');
-          await connectToFtp(client, args); // Připojení znovu
+async function safeFtpOperation(client, operation, retries = 4) {
+  const args = getArgs();
+
+  return ftpTaskQueue = ftpTaskQueue.then(async () => {
+    let attempt = 0;
+
+    while (attempt < retries) {
+      try {
+        attempt++;
+        return await operation(client);
+      } catch (error) {
+        if (error.message.includes('Client is closed') || error.message.includes('disconnected')) {
+          logError(`📂😞 FTP operation failed (attempt ${attempt}): ${error.message}`);
+          if (attempt < retries) {
+            logWarning('🥹 Reconnecting to FTP server...');
+            await connectToFtp(client, args);
+            logWarning('🥹 Retrying FTP operation...');
+          } else {
+            logError('📂😞😞 Maximum retry attempts reached. Failing operation.');
+            throw error;
+          }
         } else {
-          logError('📂😞😞 Maximum retry attempts reached. Failing operation.');
           throw error;
         }
-      } else {
-        throw error;
       }
     }
-  }
+  });
 }
 
 async function jumpToRoot(client) {
