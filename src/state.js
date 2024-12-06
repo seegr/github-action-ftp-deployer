@@ -18,9 +18,13 @@ const tempState = {
 const isExcluded = (filePath, excludePatterns) => {
   logText(`is exclude? filePath: ${filePath} patterns: ${excludePatterns}`)
   const normalizedPath = normalizePath(filePath);
-  return excludePatterns.some((pattern) =>
+  const result = excludePatterns.some((pattern) =>
     minimatch(normalizedPath, pattern) || minimatch(normalizedPath + '/', pattern)
   );
+
+  logInfo(`result: ${result}`)
+
+  return result;
 };
 
 const prepareExcludePatterns = (excludeArg) => {
