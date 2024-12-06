@@ -57,24 +57,20 @@ function stopKeepAlive(noopInterval) {
   logInfo('🔴 Stopping keep-alive (NOOP).');
 }
 
-async function safeFtpOperation(client, operation, retries = 4) {
-  const args = getArgs()
-
+async function safeFtpOperation(client, operation, retries = 3) {
+  const args = getArgs();
   let attempt = 0;
 
   while (attempt < retries) {
     try {
       attempt++;
-      // Zkus provést operaci
-      return await operation(client);
+      return await operation(client); // Každá operace musí mít `await`
     } catch (error) {
-      // Pokud je chyba spojená s připojením, pokus se o reconnect
       if (error.message.includes('Client is closed') || error.message.includes('disconnected')) {
         logError(`📂😞 FTP operation failed (attempt ${attempt}): ${error.message}`);
         if (attempt < retries) {
           logWarning('🥹 Reconnecting to FTP server...');
-          await connectToFtp(client, args);
-          logWarning('🥹 Retrying FTP operation...');
+          await connectToFtp(client, args); // Připojení znovu
         } else {
           logError('📂😞😞 Maximum retry attempts reached. Failing operation.');
           throw error;
