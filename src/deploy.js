@@ -6,18 +6,18 @@ const {getRootPath, getLocalStatePath, getServerStatePath, getTempStatePath, get
 const { jumpToRoot, safeFtpOperation } = require("./ftp")
 const {getArgs} = require("./store");
 
-const processWithFlush = async (client, toUpload, args) => {
+const processWithFlush = async (client, toUpload) => {
   let operationCount = 0;
   const flushThreshold = 5; // Počet operací před flush
 
   // Zpracování složek
   for (const folder of toUpload.folders) {
     try {
-      logInfo(`📁 Creating folder: ${folder}`);
+      logInfo(`📁 Creating folder: ${folder.remote}`);
       await safeFtpOperation(client, async (ftpClient) => {
-        await ftpClient.ensureDir(folder);
+        await ftpClient.ensureDir(folder.remote);
       });
-      logInfo(`📁 Folder created: ${folder}`);
+      logInfo(`📁 Folder created: ${folder.remote}`);
       operationCount++;
 
       if (operationCount % flushThreshold === 0) {

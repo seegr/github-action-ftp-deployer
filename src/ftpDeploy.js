@@ -43,7 +43,7 @@ async function deploy(args) {
       logText(`📄 Upload: ${item.id}`);
     });
 
-    await processWithFlush(client, toUpload, args);
+    await processWithFlush(client, toUpload);
     await disconnectFromFtp(client)
   } catch (error) {
     throw new Error(`Deployment failed: ${error.message}`);
