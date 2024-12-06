@@ -63,31 +63,28 @@ let ftpTaskQueue = Promise.resolve(); // Fronta úloh
 
 async function safeFtpOperation(client, operation, retries = 4) {
   const args = getArgs();
+  let attempt = 0;
 
-  return ftpTaskQueue = ftpTaskQueue.then(async () => {
-    let attempt = 0;
-
-    while (attempt < retries) {
-      try {
-        attempt++;
-        return await operation(client);
-      } catch (error) {
-        if (error.message.includes('Client is closed') || error.message.includes('disconnected')) {
-          logError(`📂😞 FTP operation failed (attempt ${attempt}): ${error.message}`);
-          if (attempt < retries) {
-            logWarning('🥹 Reconnecting to FTP server...');
-            await connectToFtp(client, args);
-            logWarning('🥹 Retrying FTP operation...');
-          } else {
-            logError('📂😞😞 Maximum retry attempts reached. Failing operation.');
-            throw error;
-          }
+  while (attempt < retries) {
+    try {
+      attempt++;
+      logInfo(`Starting FTP operation (attempt ${attempt})...`);
+      return await operation(client);
+    } catch (error) {
+      logError(`📂😞 FTP operation failed (attempt ${attempt}): ${error.message}`);
+      if (error.message.includes('ECONNRESET') || error.message.includes('Client is closed')) {
+        if (attempt < retries) {
+          logWarning('🥹 Reconnecting to FTP server...');
+          await connectToFtp(client, args);
+          logWarning('🥹 Retrying FTP operation...');
         } else {
-          throw error;
+          throw new Error(`📂😞😞 Maximum retry attempts reached: ${error.message}`);
         }
+      } else {
+        throw error;
       }
     }
-  });
+  }
 }
 
 async function jumpToRoot(client) {
