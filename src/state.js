@@ -16,7 +16,7 @@ const tempState = {
 };
 
 const isExcluded = (filePath, excludePatterns) => {
-  logText(`is exclude? filePath: ${filePath} patterns: ${excludePatterns}`)
+  logText(`is exclude? filePath: ${filePath}`)
   const normalizedPath = normalizePath(filePath);
   const result = excludePatterns.some((pattern) =>
     minimatch(normalizedPath, pattern) || minimatch(normalizedPath + '/', pattern)
@@ -175,6 +175,7 @@ async function setLocalState() {
   };
 
   const excludePatterns = prepareExcludePatterns(args.exclude);
+  logInfo(`excludePatterns: ${excludePatterns}`)
 
   const filteredFolders = localContent.folders.filter((folder) => {
     const excluded = isExcluded(folder.remote, excludePatterns);
