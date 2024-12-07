@@ -16,15 +16,10 @@ const tempState = {
 };
 
 const isExcluded = (filePath, excludePatterns) => {
-  logText(`is exclude? filePath: ${filePath}`)
   const normalizedPath = normalizePath(filePath);
-  const result = excludePatterns.some((pattern) =>
+  return excludePatterns.some((pattern) =>
     minimatch(normalizedPath, pattern) || minimatch(normalizedPath + '/', pattern)
   );
-
-  logInfo(`result: ${result}`)
-
-  return result;
 };
 
 const prepareExcludePatterns = (excludeArg) => {
@@ -110,7 +105,6 @@ const scanLocalDir = () => {
 
       // Kontrola na exclude
       if (isExcluded(remotePath, excludePatterns)) {
-        logInfo(`Excluded: ${remotePath}`);
         continue; // Přeskočit položky, které odpovídají exclude patternům
       }
 
