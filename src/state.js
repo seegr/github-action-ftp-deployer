@@ -147,7 +147,6 @@ const getIdFromRemotePath = (remotePath) => {
 }
 
 async function setLocalState() {
-  const args = getArgs()
   const localContent = scanLocalDir();
   const stateFilePath = getLocalStatePath();
 
@@ -164,7 +163,7 @@ async function setLocalState() {
   const localDir = getLocalDir();
   const serverDir = getServerDir();
   const rootPath = getRootPath();
-  const remotePath = serverDir.startsWith('./') ? serverDir.replace('./', '/') : serverDir;
+  const serverPath = normalizePath(serverDir)
 
   let state = {
     description: "State for tracking uploaded files and folders",
@@ -175,7 +174,7 @@ async function setLocalState() {
 
   for (const folder of localContent.folders) {
     if (!state.data.some((item) => item.type === 'folder' && item.name === folder.remote)) {
-      const folderRemote = `${remotePath}/${folder.remote}`;
+      const folderRemote = `${serverPath}/${folder.remote}`;
 
       state.data.push({
         type: 'folder',
@@ -196,7 +195,7 @@ async function setLocalState() {
         state.data[existingFileIndex].hash = hash;
       }
     } else {
-      const fileRemote = normalizePath(`${remotePath}/${file.remote}`);
+      const fileRemote = normalizePath(`${serverPath}/${file.remote}`);
       state.data.push({
         type: 'file',
         id: getIdFromRemotePath(fileRemote),
@@ -260,7 +259,7 @@ const initUploadsFromStates = async (client) => {
 
   // Přidání souborů k uploadu
   localPaths.filter((item) => item.type === 'file').forEach((file) => {
-    logInfo(`folder: ${file.remote}`)
+    logInfo(`file: ${file.remote}`)
     const serverFile = serverState.data.find((sItem) => sItem.id === file.id);
     if (!serverFile || serverFile.hash !== file.hash) {
       toUpload.files.push(file);
