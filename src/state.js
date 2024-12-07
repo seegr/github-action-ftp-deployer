@@ -191,7 +191,6 @@ async function setLocalState() {
       (item) => item.type === 'file' && item.name === file.remote
     );
 
-
     if (existingFileIndex !== -1) {
       if (state.data[existingFileIndex].hash !== hash) {
         state.data[existingFileIndex].hash = hash;
@@ -247,11 +246,10 @@ const initUploadsFromStates = async (client) => {
   const serverPaths = new Set(serverState.data.map((item) => item.remote));
   const localPaths = localState.data;
 
-  // logInfo(`serverPaths: ${jsonToConsole(Array.from(serverPaths))}`);
-
+  logInfo(`serverPaths: ${jsonToConsole(Array.from(serverPaths))}`);
+  return
   // Přidání složek k uploadu
   localPaths.filter((item) => item.type === 'folder').forEach((folder) => {
-    // console.log(folder.remote)
     if (!serverPaths.has(folder.remote)) {
       toUpload.folders.push(folder);
     }
