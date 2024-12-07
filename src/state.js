@@ -243,25 +243,28 @@ const initUploadsFromStates = async (client) => {
 
   // logInfo(`serverState: ${jsonToConsole(serverState)}`)
 
-  const serverPaths = new Set(serverState.data.map((item) => item.remote));
+  const serverPaths = new Set(serverState.data.map((item) => normalizePath(item.remote)));
   const localPaths = localState.data;
 
   logInfo(`serverPaths: ${jsonToConsole(Array.from(serverPaths))}`);
-  return
   // Přidání složek k uploadu
   localPaths.filter((item) => item.type === 'folder').forEach((folder) => {
+    logInfo(`folder: ${folder}`)
     if (!serverPaths.has(folder.remote)) {
       toUpload.folders.push(folder);
     }
   });
 
+
   // Přidání souborů k uploadu
   localPaths.filter((item) => item.type === 'file').forEach((file) => {
+    logInfo(`folder: ${file}`)
     const serverFile = serverState.data.find((sItem) => sItem.id === file.id);
     if (!serverFile || serverFile.hash !== file.hash) {
       toUpload.files.push(file);
     }
   });
+  return
 
   // Uložení dočasného state pro pozdější aktualizace
   tempState.data = [];
