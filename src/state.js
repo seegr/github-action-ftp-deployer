@@ -173,8 +173,9 @@ async function setLocalState() {
   };
 
   for (const folder of localContent.folders) {
+    logInfo(`folderRemote: ${folder.remote}`)
     if (!state.data.some((item) => item.type === 'folder' && item.name === folder.remote)) {
-      const folderRemote = `${serverPath}/${folder.remote}`;
+      const folderRemote = normalizePath(`${serverPath}/${folder.remote}`);
 
       state.data.push({
         type: 'folder',
