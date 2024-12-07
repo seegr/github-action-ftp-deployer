@@ -5,7 +5,8 @@ const jsonToConsole = (json) => {
 const normalizePath = (filePath) => {
   return filePath
     .replace(/\/+/g, '/') // Nahradí více lomítek za jedno
-    .replace(/^(\.\/|\/|\.{2}\/)+/, ''); // Odstraní ./, / nebo ../ na začátku
+    .replace(/^(\.\/|\/|\.{2}\/)+/, '') // Odstraní ./, / nebo ../ na začátku
+    .replace(/^[*\/]+/, '');
 };
 
 module.exports = { jsonToConsole, normalizePath }

@@ -235,6 +235,8 @@ const initUploadsFromStates = async (client) => {
   logText(`Loading local state from: ${localStatePath}`);
   const localState = JSON.parse(fs.readFileSync(localStatePath, 'utf8'));
 
+
+
   // Porovnání a příprava `toUpload`
   const toUpload = {
     folders: [],
@@ -245,11 +247,11 @@ const initUploadsFromStates = async (client) => {
 
   const serverPaths = new Set(serverState.data.map((item) => normalizePath(item.remote)));
   const localPaths = localState.data;
-
   logInfo(`serverPaths: ${jsonToConsole(Array.from(serverPaths))}`);
+
   // Přidání složek k uploadu
   localPaths.filter((item) => item.type === 'folder').forEach((folder) => {
-    logInfo(`folder: ${folder}`)
+    logInfo(`folder: ${folder.remote}`)
     if (!serverPaths.has(folder.remote)) {
       toUpload.folders.push(folder);
     }
@@ -258,7 +260,7 @@ const initUploadsFromStates = async (client) => {
 
   // Přidání souborů k uploadu
   localPaths.filter((item) => item.type === 'file').forEach((file) => {
-    logInfo(`folder: ${file}`)
+    logInfo(`folder: ${file.remote}`)
     const serverFile = serverState.data.find((sItem) => sItem.id === file.id);
     if (!serverFile || serverFile.hash !== file.hash) {
       toUpload.files.push(file);
