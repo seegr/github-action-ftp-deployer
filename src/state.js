@@ -65,7 +65,7 @@ const calculateHash = (filePath) => {
   return hash.digest('hex');
 };
 
-const updateServerState = async (client, localStatePath) => {
+const updateState = async (client, localStatePath) => {
   const serverStatePath = getServerStatePath()
 
   try {
@@ -96,22 +96,21 @@ const scanLocalDir = () => {
     for (const entry of entries) {
       const id = entry.name;
       const fullPath = path.join(dir, entry.name);
-      const relativePath = path.relative(localDir, fullPath);
-      const remotePath = normalizePath(`${path.join(relativePath)}`);
+      const relativePath = normalizePath(path.relative(localDir, fullPath));
 
       if (entry.name === args.stateName) {
-        continue; // Ignorovat state file
+        continue;
       }
 
       // Kontrola na exclude
-      if (isExcluded(remotePath, excludePatterns)) {
-        continue; // Přeskočit položky, které odpovídají exclude patternům
+      if (isExcluded(relativePath, excludePatterns)) {
+        continue;
       }
 
       if (entry.isDirectory()) {
         foldersToCreate.push({
           id,
-          remote: remotePath
+          path: relativePath
         });
 
         try {
@@ -123,7 +122,7 @@ const scanLocalDir = () => {
         filesToUpload.push({
           id,
           local: `${fullPath}`,
-          remote: remotePath
+          path: relativePath
         });
       }
     }
@@ -136,15 +135,6 @@ const scanLocalDir = () => {
     files: filesToUpload
   };
 };
-
-const getIdFromRemotePath = (remotePath) => {
-  let serverDir = getServerDir()
-  serverDir = serverDir.startsWith('./') ? serverDir.replace('./', '') : serverDir
-  remotePath = remotePath.replace(serverDir, '')
-  remotePath = remotePath.replace(/^\/+/, '');
-
-  return normalizePath(`${getLocalDir()}/${remotePath}`)
-}
 
 async function setLocalState() {
   const localContent = scanLocalDir();
@@ -160,11 +150,6 @@ async function setLocalState() {
     }
   }
 
-  const localDir = getLocalDir();
-  const serverDir = getServerDir();
-  const rootPath = getRootPath();
-  const serverPath = normalizePath(serverDir)
-
   let state = {
     description: "State for tracking uploaded files and folders",
     version: "1.0.0",
@@ -173,14 +158,12 @@ async function setLocalState() {
   };
 
   for (const folder of localContent.folders) {
-    logInfo(`folderRemote: ${folder.remote}`)
-    if (!state.data.some((item) => item.type === 'folder' && item.name === folder.remote)) {
-      const folderRemote = normalizePath(`${serverPath}/${folder.remote}`);
+    // logInfo(`folderRemote: ${folder.path}`)
+    if (!state.data.some((item) => item.type === 'folder' && item.name === folder.path)) {
 
       state.data.push({
         type: 'folder',
-        id: getIdFromRemotePath(folderRemote),
-        remote: folderRemote,
+        path: normalizePath(folder.path)
       });
     }
   }
@@ -188,7 +171,7 @@ async function setLocalState() {
   for (const file of localContent.files) {
     const hash = calculateHash(file.local);
     const existingFileIndex = state.data.findIndex(
-      (item) => item.type === 'file' && item.name === file.remote
+      (item) => item.type === 'file' && item.name === file.path
     );
 
     if (existingFileIndex !== -1) {
@@ -196,11 +179,9 @@ async function setLocalState() {
         state.data[existingFileIndex].hash = hash;
       }
     } else {
-      const fileRemote = normalizePath(`${serverPath}/${file.remote}`);
       state.data.push({
         type: 'file',
-        id: getIdFromRemotePath(fileRemote),
-        remote: fileRemote,
+        path: normalizePath(file.path),
         hash,
       });
     }
@@ -235,9 +216,6 @@ const initUploadsFromStates = async (client) => {
   logText(`Loading local state from: ${localStatePath}`);
   const localState = JSON.parse(fs.readFileSync(localStatePath, 'utf8'));
 
-
-
-  // Porovnání a příprava `toUpload`
   const toUpload = {
     folders: [],
     files: []
@@ -245,28 +223,24 @@ const initUploadsFromStates = async (client) => {
 
   // logInfo(`serverState: ${jsonToConsole(serverState)}`)
 
-  const serverPaths = new Set(serverState.data.map((item) => normalizePath(item.remote)));
+  const serverPaths = new Set(serverState.data.map((item) => normalizePath(item.path)));
   const localPaths = localState.data;
-  logInfo(`serverPaths: ${jsonToConsole(Array.from(serverPaths))}`);
+  // logInfo(`serverPaths: ${jsonToConsole(Array.from(serverPaths))}`);
 
-  // Přidání složek k uploadu
   localPaths.filter((item) => item.type === 'folder').forEach((folder) => {
-    logInfo(`folder: ${folder.remote}`)
-    if (!serverPaths.has(folder.remote)) {
+    // logInfo(`folder: ${folder.path}`)
+    if (!serverPaths.has(folder.path)) {
       toUpload.folders.push(folder);
     }
   });
 
-
-  // Přidání souborů k uploadu
   localPaths.filter((item) => item.type === 'file').forEach((file) => {
-    logInfo(`file: ${file.remote}`)
-    const serverFile = serverState.data.find((sItem) => sItem.id === file.id);
+    // logInfo(`file: ${file.path}`)
+    const serverFile = serverState.data.find((sItem) => sItem.path === file.path);
     if (!serverFile || serverFile.hash !== file.hash) {
       toUpload.files.push(file);
     }
   });
-  return
 
   // Uložení dočasného state pro pozdější aktualizace
   tempState.data = [];
@@ -275,4 +249,4 @@ const initUploadsFromStates = async (client) => {
   return toUpload;
 };
 
-module.exports = { setLocalState, updateServerState, updateTempState, calculateHash, initUploadsFromStates };
+module.exports = { setLocalState, updateState, updateTempState, calculateHash, initUploadsFromStates };

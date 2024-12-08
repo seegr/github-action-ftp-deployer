@@ -36,11 +36,11 @@ async function deploy(args) {
     const toUpload = await initUploadsFromStates(client, args);
 
     toUpload.folders.map(item => {
-      logText(`📁 To Create: ${item.id}`);
+      logText(`📁 To Create: ${item.path}`);
     });
 
     toUpload.files.map(item => {
-      logText(`📄 To Upload: ${item.id}`);
+      logText(`📄 To Upload: ${item.path}`);
     });
 
     await processWithFlush(client, toUpload);

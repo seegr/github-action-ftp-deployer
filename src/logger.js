@@ -23,7 +23,7 @@ function logWarning(message) {
 
 const logError = (message, error) => {
   if (error instanceof Error) {
-    logAlert(`${message}: ${error.message}`);
+    logAlert(`${message}`);
     core.error(`Stack trace: ${error.stack}`);
   } else {
     core.error(`${message}: ${JSON.stringify(error)}`);

@@ -1,3 +1,4 @@
+const {logInfo} = require("./logger");
 const jsonToConsole = (json) => {
   return JSON.stringify(json, null, 2)
 }

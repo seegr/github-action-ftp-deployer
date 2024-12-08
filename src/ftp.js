@@ -17,12 +17,9 @@ async function connectToFtp(client, args, attempt = 3) {
     });
 
     logSuccess('📂🗄 FTP connection established successfully.');
-
-    // Start NOOP to keep the connection alive
-    // noopInterval = startKeepAlive(client);
   } catch (error) {
     if (attempt < 3) {
-      logError(`📂😞 Connection failed (attempt ${attempt}): ${error.message}`, error);
+      logError(`📂😞 Connection failed (attempt ${attempt}): ${error}`, error);
       logWarning('🥹 Retrying connection...');
 
       return connectToFtp(client, args, attempt + 1);
@@ -68,17 +65,14 @@ async function safeFtpOperation(client, operation, retries = 4) {
   while (attempt < retries) {
     try {
       attempt++;
-      // logInfo(`Starting FTP operation (attempt ${attempt})...`);
-      const result = await operation(client); // Vždy použij `await`
-      // logInfo(`FTP operation succeeded (attempt ${attempt}).`);
-      return result;
+      return await operation(client);
     } catch (error) {
       if (
         error.message.includes('Client is closed') ||
         error.message.includes('disconnected') ||
         error.message.includes('User launched a task')
       ) {
-        logError(`📂😞 FTP operation failed (attempt ${attempt}): ${error.message}`);
+        logError(`📂😞 FTP operation failed (attempt ${attempt}): ${error}`);
         if (attempt < retries) {
           logWarning('🥹 Reconnecting to FTP server...');
           await connectToFtp(client, args);
