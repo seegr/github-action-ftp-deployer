@@ -4,7 +4,7 @@ const {getServerDir} = require("./paths");
 
 // let noopInterval = null;
 
-async function connectToFtp(client, args, attempt = 3) {
+async function connectToFtp(client, args, attempt = 1) {
   try {
     logText(`📂 Connecting to FTP server (attempt ${attempt})...`);
 
