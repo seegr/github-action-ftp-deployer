@@ -139,6 +139,8 @@ const scanLocalDir = () => {
 async function setLocalState() {
   const localContent = scanLocalDir();
   const stateFilePath = getLocalStatePath();
+  logInfo(`localContent: ${localContent}`)
+  return
 
   if (fs.existsSync(stateFilePath)) {
     try {
