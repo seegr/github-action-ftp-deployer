@@ -8,13 +8,23 @@ async function keepConnectionAlive(client, interval = 30000) {
   noopInterval = setInterval(async () => {
     try {
       logText('🔄 Sending NOOP to keep connection alive...');
-      await client.send('NOOP');
-      logSuccess('✅ Connection is alive.');
+      if (!client.closed) {
+
+        await safeFtpOperation(client, async (ftpClient) => {
+          await ftpClient.send('NOOP');
+        });
+        // logSuccess('✅ Connection is alive.');
+      } else {
+        logWarning('⚠️ Client is closed. Stopping NOOP operation.');
+        clearInterval(noopInterval);
+      }
     } catch (error) {
       logWarning('⚠️ Failed to send NOOP. Connection might be closing.', error);
+      clearInterval(noopInterval); // Zastavení intervalů při chybě
     }
   }, interval);
 }
+
 
 const connectToFtp = async (client, args, retries = 3) => {
   for (let attempt = 1; attempt <= retries; attempt++) {
@@ -26,10 +36,10 @@ const connectToFtp = async (client, args, retries = 3) => {
         user: args.username,
         password: args.password,
         secure: true,
-        secureOptions: { rejectUnauthorized: false }
+        secureOptions: { rejectUnauthorized: false },
       });
 
-      await keepConnectionAlive(client)
+      await keepConnectionAlive(client);
 
       logSuccess('📂🗄 FTP connection established successfully.');
       return;
@@ -42,19 +52,25 @@ const connectToFtp = async (client, args, retries = 3) => {
       }
 
       logWarning('🥹 Retrying connection...');
-      await delay(3000)
+      await delay(3000);
     }
   }
 };
 
+
 async function disconnectFromFtp(client) {
-  if (noopInterval) {
-    clearInterval(noopInterval);
+  try {
+    if (noopInterval) {
+      clearInterval(noopInterval);
+      logInfo('✅ NOOP interval cleared.');
+    }
+
+    client.close();
+
+    logInfo('📂 Disconnected from FTP server.');
+  } catch (error) {
+    logError('📂😞 Failed to disconnect from FTP server:', error);
   }
-
-  client.close();
-
-  logInfo('📂 Disconnected from FTP server.');
 }
 
 async function safeFtpOperation(client, operation, retries = 4) {
