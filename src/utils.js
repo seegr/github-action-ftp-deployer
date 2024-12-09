@@ -1,4 +1,6 @@
 const {logInfo} = require("./logger");
+const path = require("path");
+const {getRootPath, getLocalDir, getServerDir} = require("./paths");
 const jsonToConsole = (json) => {
   return JSON.stringify(json, null, 2)
 }
@@ -10,4 +12,8 @@ const normalizePath = (filePath) => {
     .replace(/^(\.\/|\.{2}\/)+/, ''); // Odstraní ./ nebo ../ na začátku
 };
 
-module.exports = { jsonToConsole, normalizePath }
+const getServerFullPath = (filePath) => {
+  return path.join(getRootPath(), getLocalDir(), filePath);
+}
+
+module.exports = { jsonToConsole, normalizePath, getServerFullPath }

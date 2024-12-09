@@ -6,7 +6,7 @@ const crypto = require("crypto");
 const { safeFtpOperation, jumpToRoot } = require('./ftp')
 const {getRootPath, getLocalDir, getServerDir, getLocalStatePath, getServerStatePath, getTempStatePath} = require("./paths");
 const {getArgs} = require("./store");
-const { jsonToConsole, normalizePath } = require("./utils")
+const { jsonToConsole, normalizePath, getServerFullPath} = require("./utils")
 
 const tempState = {
   description: "Temporary state for in-progress sync",
@@ -121,7 +121,6 @@ const scanLocalDir = () => {
       } else {
         filesToUpload.push({
           id,
-          local: `${fullPath}`,
           path: relativePath
         });
       }
@@ -140,7 +139,6 @@ async function setLocalState() {
   const localContent = scanLocalDir();
   const stateFilePath = getLocalStatePath();
   logInfo(`localContent: ${jsonToConsole(localContent)}`)
-  return
 
   if (fs.existsSync(stateFilePath)) {
     try {
@@ -171,7 +169,8 @@ async function setLocalState() {
   }
 
   for (const file of localContent.files) {
-    const hash = calculateHash(file.local);
+    const fullPath = getServerFullPath(file.path)
+    const hash = calculateHash(fullPath);
     const existingFileIndex = state.data.findIndex(
       (item) => item.type === 'file' && item.name === file.path
     );
