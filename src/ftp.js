@@ -4,30 +4,35 @@ const {getServerDir} = require("./paths");
 
 // let noopInterval = null;
 
-async function connectToFtp(client, args, attempt = 1) {
-  try {
-    logText(`📂 Connecting to FTP server (attempt ${attempt})...`);
+const connectToFtp = async (client, args, retries = 3) => {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      logText(`📂 Connecting to FTP server (attempt ${attempt}/${retries})...`);
 
-    await client.access({
-      host: args.server,
-      user: args.username,
-      password: args.password,
-      secure: true,
-      secureOptions: { rejectUnauthorized: false },
-    });
+      await client.access({
+        host: args.server,
+        user: args.username,
+        password: args.password,
+        secure: true,
+        secureOptions: { rejectUnauthorized: false },
+        minVersion: 'TLSv1',
+        maxVersion: 'TLSv1.2',
+      });
 
-    logSuccess('📂🗄 FTP connection established successfully.');
-  } catch (error) {
-    if (attempt < 3) {
-      logError(`📂😞 Connection failed (attempt ${attempt}): ${error}`, error);
+      logSuccess('📂🗄 FTP connection established successfully.');
+      return; // Úspěšné připojení, ukončíme funkci
+    } catch (error) {
+      logError(`📂😞 Connection failed (attempt ${attempt}/${retries}): ${error.message}`, error);
+
+      if (attempt === retries) {
+        logAlert(`📂😞😞 Failed to connect to FTP server after ${retries} attempts.`);
+        throw new Error(`📂😞😞 Failed to connect to FTP server: ${error.message}`);
+      }
+
       logWarning('🥹 Retrying connection...');
-
-      return connectToFtp(client, args, attempt + 1);
-    } else {
-      throw new Error(`📂😞😞 Failed to connect to FTP server after 3 attempts: ${error.message}`);
     }
   }
-}
+};
 
 async function disconnectFromFtp(client) {
   // if (noopInterval) {

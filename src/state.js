@@ -59,19 +59,30 @@ const calculateHash = (filePath) => {
   return hash.digest('hex');
 };
 
-const updateState = async (client, localStatePath) => {
-  const serverStatePath = getServerStatePath()
+const updateState = async (client, localStatePath, retries = 3) => {
+  const serverStatePath = getServerStatePath();
 
-  try {
-    await jumpToRoot(client);
-    logText(`Updating state file on server`);
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      await jumpToRoot(client);
+      logText(`📂 Updating state file on server (attempt ${attempt}/${retries})`);
 
-    await safeFtpOperation(client, async (ftpClient) => {
-      await ftpClient.uploadFrom(localStatePath, serverStatePath);
-    });
-    logSuccess('State file successfully uploaded to server.');
-  } catch (error) {
-    logError(`Failed to upload state file: ${error.message}`, error);
+      await safeFtpOperation(client, async (ftpClient) => {
+        await ftpClient.uploadFrom(localStatePath, serverStatePath);
+      });
+
+      logSuccess('📂 State file successfully uploaded to server.');
+      return; // Úspěšně dokončeno, ukončíme funkci
+    } catch (error) {
+      logError(`Failed to upload state file (attempt ${attempt}/${retries}): ${error.message}`);
+
+      if (attempt === retries) {
+        logAlert(`📂😞 Failed to upload state file after ${retries} attempts.`);
+        throw error; // Pokud selže i poslední pokus, vyhodíme chybu
+      }
+
+      logWarning('🥹 Retrying state file upload...');
+    }
   }
 };
 
