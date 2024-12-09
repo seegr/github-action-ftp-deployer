@@ -194,7 +194,6 @@ async function setLocalState() {
 }
 
 const initUploadsFromStates = async (client) => {
-  logInfo('initUploadsFromStates...')
   const tempStatePath = getTempStatePath();
   let serverState = { data: [] };
 

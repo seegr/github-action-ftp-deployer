@@ -10,10 +10,15 @@ const getLocalStatePath = () => {
 }
 
 const getServerDir = () => {
-  const args = getArgs()
+  const args = getArgs();
+  let serverDir = args.serverDir;
 
-  return args.serverDir
-}
+  if (serverDir.startsWith('./')) {
+    serverDir = serverDir.replace('./', '/');
+  }
+
+  return serverDir.replace(/\/+/g, '/'); // Normalizujeme více lomítek
+};
 
 const getLocalDir = () => {
   const args = getArgs()
@@ -25,7 +30,7 @@ const getServerStatePath = () => {
   const args = getArgs()
 
   const serverDir = getServerDir();
-  return `/${path.join(serverDir, args.stateName)}`;
+  return `${path.join(serverDir, args.stateName)}`;
 };
 
 const getTempStatePath = () => {

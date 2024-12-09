@@ -90,8 +90,15 @@ async function safeFtpOperation(client, operation, retries = 4) {
 }
 
 async function jumpToRoot(client) {
-  await client.cd('/'); // Jdi na root
-  await client.cd(getServerDir());
+  try {
+    await client.cd('/');
+    const serverDir = getServerDir();
+    await client.cd(serverDir);
+    // logInfo(`Current directory after serverDir jump: ${await client.pwd()}`);
+  } catch (error) {
+    logError(`Failed to jump to root: ${error.message}`, error);
+    throw new Error(`Jump to root failed: ${error.message}`);
+  }
 }
 
 module.exports = { connectToFtp, safeFtpOperation, jumpToRoot, disconnectFromFtp }

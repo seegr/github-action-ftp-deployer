@@ -1,12 +1,6 @@
 {
     "description": "Temporary state for in-progress sync",
     "version": "1.0.0",
-    "generatedTime": 1733702157184,
-    "data": [
-        {
-            "type": "file",
-            "path": "app/modules/Front/components/sfdsfs.txt",
-            "hash": "b139d3f9cbadd1a8a54503145b4ec2086179403323a21d089af73add19d5eab8"
-        }
-    ]
+    "generatedTime": 1733704531421,
+    "data": []
 }
