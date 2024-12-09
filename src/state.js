@@ -245,7 +245,7 @@ const initUploadsFromStates = async (client) => {
   });
 
   // Uložení dočasného state pro pozdější aktualizace
-  const tempState = serverState;
+  const tempState = { ...serverState };
   fs.writeFileSync(getTempStatePath(), JSON.stringify(tempState, null, 4), 'utf8');
 
   return toUpload;
