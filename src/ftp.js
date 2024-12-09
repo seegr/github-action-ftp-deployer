@@ -76,7 +76,9 @@ async function safeFtpOperation(client, operation, retries = 4) {
         logError(`📂😞 FTP operation failed (attempt ${attempt}): ${error}`);
         if (attempt < retries) {
           logWarning('🥹 Reconnecting to FTP server...');
-          await connectToFtp(client, args);
+          setTimeout(async () => {
+            await connectToFtp(client, args);
+          }, 2000)
           logWarning('🥹 Retrying FTP operation...');
         } else {
           logError('📂😞😞 Maximum retry attempts reached. Failing operation.');
