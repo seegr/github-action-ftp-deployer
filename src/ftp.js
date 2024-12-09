@@ -35,11 +35,11 @@ const stopKeepAlive = () => {
 
 
 const connectToFtp = async (client, args, retries = 3) => {
-  stopKeepAlive()
-
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       logText(`📂 Connecting to FTP server (attempt ${attempt}/${retries})...`);
+
+      stopKeepAlive()
 
       await client.access({
         host: args.server,
