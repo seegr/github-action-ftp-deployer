@@ -5,22 +5,21 @@ const {getServerDir, delay} = require("./utils");
 let noopInterval = null;
 
 async function keepConnectionAlive(client, interval = 30000) {
+  stopKeepAlive(); // Zastav jakýkoliv existující interval
+
   noopInterval = setInterval(async () => {
     try {
       logText('🔄 Sending NOOP to keep connection alive...');
       if (!client.closed) {
-
         await safeFtpOperation(client, async (ftpClient) => {
           await ftpClient.send('NOOP');
         });
-        // logSuccess('✅ Connection is alive.');
       } else {
-        logWarning('⚠️ Client is closed. Stopping NOOP operation.');
-        clearInterval(noopInterval);
+        throw new Error('Client is closed.');
       }
     } catch (error) {
-      logWarning('⚠️ Failed to send NOOP. Connection might be closing.', error);
-      clearInterval(noopInterval); // Zastavení intervalů při chybě
+      logWarning('⚠️ Failed to send NOOP. Stopping NOOP operation.', error);
+      stopKeepAlive(); // Zastav NOOP při chybě
     }
   }, interval);
 }
@@ -35,12 +34,11 @@ const stopKeepAlive = () => {
 
 
 const connectToFtp = async (client, args, retries = 3) => {
+  stopKeepAlive(); // Zastav NOOP před připojením
+
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       logText(`📂 Connecting to FTP server (attempt ${attempt}/${retries})...`);
-
-      stopKeepAlive()
-
       await client.access({
         host: args.server,
         user: args.username,
@@ -50,7 +48,6 @@ const connectToFtp = async (client, args, retries = 3) => {
       });
 
       await keepConnectionAlive(client);
-
       logSuccess('📂🗄 FTP connection established successfully.');
       return;
     } catch (error) {
@@ -62,7 +59,7 @@ const connectToFtp = async (client, args, retries = 3) => {
       }
 
       logWarning('🥹 Retrying connection...');
-      await delay(3000);
+      await delay(3000); // Pauza mezi pokusy
     }
   }
 };
@@ -88,8 +85,10 @@ async function safeFtpOperation(client, operation, retries = 4) {
 
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      // Pokus o provedení operace
-      return await operation(client);
+      stopKeepAlive(); // Zastavení NOOP před pokusem o operaci
+      const result = await operation(client); // Provedení operace
+      await keepConnectionAlive(client); // Restart NOOP po úspěšné operaci
+      return result;
     } catch (error) {
       if (
         error.message.includes('Client is closed') ||
@@ -103,14 +102,14 @@ async function safeFtpOperation(client, operation, retries = 4) {
         if (attempt < retries) {
           logWarning('🥹 Reconnecting to FTP server...');
           await delay(2000); // Pauza před opakováním
-          await connectToFtp(client, args);
+          await connectToFtp(client, args); // Obnova připojení
           logWarning('🥹 Retrying FTP operation...');
         } else {
           logError('📂😞😞 Maximum retry attempts reached. Failing operation.');
           throw new Error(`📂😞😞 FTP operation failed after ${retries} attempts: ${error.message}`);
         }
       } else {
-        throw error;
+        throw error; // Jiná chyba, není spojena s připojením
       }
     }
   }
