@@ -138,7 +138,7 @@ const scanLocalDir = () => {
 async function setLocalState() {
   const localContent = scanLocalDir();
   const stateFilePath = getLocalStatePath();
-  logInfo(`localContent: ${jsonToConsole(localContent)}`)
+  // logInfo(`localContent: ${jsonToConsole(localContent)}`)
 
   if (fs.existsSync(stateFilePath)) {
     try {
