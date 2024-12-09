@@ -4,9 +4,8 @@ const minimatch = require('minimatch')
 const { logInfo, logError, logWarning, logSuccess, logText, logAlert} = require('./logger');
 const crypto = require("crypto");
 const { safeFtpOperation, jumpToRoot } = require('./ftp')
-const {getRootPath, getLocalDir, getServerDir, getLocalStatePath, getServerStatePath, getTempStatePath} = require("./paths");
 const {getArgs} = require("./store");
-const { jsonToConsole, normalizePath, getServerFullPath} = require("./utils")
+const { jsonToConsole, normalizePath, getServerFullPath, getRootPath, getLocalDir, getServerDir, getLocalStatePath, getServerStatePath, getTempStatePath} = require("./utils")
 
 const isExcluded = (filePath, excludePatterns) => {
   const normalizedPath = normalizePath(filePath);
@@ -59,31 +58,17 @@ const calculateHash = (filePath) => {
   return hash.digest('hex');
 };
 
-const updateState = async (client, localStatePath, retries = 3) => {
+const updateState = async (client, localStatePath) => {
   const serverStatePath = getServerStatePath();
 
-  for (let attempt = 1; attempt <= retries; attempt++) {
-    try {
-      await jumpToRoot(client);
-      logText(`📂 Updating state file on server (attempt ${attempt}/${retries})`);
+  logText(`📂 Updating state file on server`);
 
-      await safeFtpOperation(client, async (ftpClient) => {
-        await ftpClient.uploadFrom(localStatePath, serverStatePath);
-      });
+  await safeFtpOperation(client, async (ftpClient) => {
+    await jumpToRoot(ftpClient);
+    await ftpClient.uploadFrom(localStatePath, serverStatePath);
+  });
 
-      logSuccess('📂 State file successfully uploaded to server.');
-      return; // Úspěšně dokončeno, ukončíme funkci
-    } catch (error) {
-      logError(`Failed to upload state file (attempt ${attempt}/${retries}): ${error.message}`);
-
-      if (attempt === retries) {
-        logAlert(`📂😞 Failed to upload state file after ${retries} attempts.`);
-        throw error; // Pokud selže i poslední pokus, vyhodíme chybu
-      }
-
-      logWarning('🥹 Retrying state file upload...');
-    }
-  }
+  logSuccess('📂 State file successfully uploaded to server.');
 };
 
 const scanLocalDir = () => {
@@ -194,7 +179,7 @@ async function setLocalState() {
   }
 
   // Write updated state to file
-  logInfo('Saving local state')
+  logInfo(`Saving local state: ${stateFilePath}`)
   fs.writeFileSync(stateFilePath, JSON.stringify(state, null, 2), 'utf-8');
   logInfo('Local state saved')
 }
@@ -231,7 +216,7 @@ const initUploadsFromStates = async (client) => {
   // logInfo(`serverState: ${jsonToConsole(serverState)}`)
   const serverPaths = new Set(serverState.data.map((item) => normalizePath(item.path)));
   const localPaths = localState.data;
-  logInfo(`serverPaths: ${jsonToConsole(Array.from(serverPaths))}`);
+  // logInfo(`serverPaths: ${jsonToConsole(Array.from(serverPaths))}`);
 
   localPaths.filter((item) => item.type === 'folder').forEach((folder) => {
     // logInfo(`folder: ${folder.path}`)
@@ -250,7 +235,7 @@ const initUploadsFromStates = async (client) => {
 
   // Uložení dočasného state pro pozdější aktualizace
   const tempState = { ...serverState };
-  logInfo(`tempState: ${jsonToConsole(tempState)}`)
+  // logInfo(`tempState: ${jsonToConsole(tempState)}`)
   fs.writeFileSync(getTempStatePath(), JSON.stringify(tempState, null, 4), 'utf8');
 
   return toUpload;

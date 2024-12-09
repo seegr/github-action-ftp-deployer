@@ -2,10 +2,9 @@ const fs = require('fs');
 const path = require('path');
 const { logInfo, logSuccess, logError, logText} = require('./logger');
 const { updateLocalStateFile, updateState, updateTempState, calculateHash } = require('./state')
-const {getRootPath, getLocalStatePath, getServerStatePath, getTempStatePath, getServerDir, getLocalDir} = require("./paths");
 const { jumpToRoot, safeFtpOperation } = require("./ftp")
 const {getArgs} = require("./store");
-const { normalizePath } = require("./utils");
+const { normalizePath, getRootPath, getLocalStatePath, getServerStatePath, getTempStatePath, getServerDir, getLocalDir } = require("./utils");
 
 
 const processWithFlush = async (client, toUpload) => {
@@ -40,9 +39,8 @@ const processWithFlush = async (client, toUpload) => {
   const createFolder = async (folder) => {
     logText(`📁 Creating folder: ${folder.path}`);
 
-    await jumpToRoot(client);
-
     await safeFtpOperation(client, async (ftpClient) => {
+      await jumpToRoot(client);
       await ftpClient.ensureDir(`${folder.path}`);
     });
 
@@ -62,9 +60,8 @@ const processWithFlush = async (client, toUpload) => {
     logInfo(`📄 Uploading file: ${localPath}`);
     // logInfo(`📄 Uploading file: ${localPath} -> ${remotePath}`);
 
-    await jumpToRoot(client);
-
     await safeFtpOperation(client, async (ftpClient) => {
+      await jumpToRoot(client);
       await ftpClient.uploadFrom(localPath, `/${remotePath}`);
     });
 
@@ -107,8 +104,6 @@ const processWithFlush = async (client, toUpload) => {
   logInfo('📂 Finalizing: Uploading state file to server...');
   await updateState(client, getLocalStatePath());
 };
-
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 
 module.exports = { processWithFlush, getLocalStatePath, getServerStatePath };

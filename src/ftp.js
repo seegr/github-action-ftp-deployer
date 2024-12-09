@@ -1,8 +1,20 @@
-const {logError, logInfo, logWarning, logText, logSuccess} = require("./logger");
+const {logError, logInfo, logWarning, logText, logSuccess, logAlert} = require("./logger");
 const {getArgs} = require("./store");
-const {getServerDir} = require("./paths");
+const {getServerDir, delay} = require("./utils");
 
-// let noopInterval = null;
+let noopInterval = null;
+
+async function keepConnectionAlive(client, interval = 30000) {
+  noopInterval = setInterval(async () => {
+    try {
+      logText('🔄 Sending NOOP to keep connection alive...');
+      await client.send('NOOP');
+      logSuccess('✅ Connection is alive.');
+    } catch (error) {
+      logWarning('⚠️ Failed to send NOOP. Connection might be closing.', error);
+    }
+  }, interval);
+}
 
 const connectToFtp = async (client, args, retries = 3) => {
   for (let attempt = 1; attempt <= retries; attempt++) {
@@ -14,13 +26,13 @@ const connectToFtp = async (client, args, retries = 3) => {
         user: args.username,
         password: args.password,
         secure: true,
-        secureOptions: { rejectUnauthorized: false },
-        minVersion: 'TLSv1',
-        maxVersion: 'TLSv1.2',
+        secureOptions: { rejectUnauthorized: false }
       });
 
+      await keepConnectionAlive(client)
+
       logSuccess('📂🗄 FTP connection established successfully.');
-      return; // Úspěšné připojení, ukončíme funkci
+      return;
     } catch (error) {
       logError(`📂😞 Connection failed (attempt ${attempt}/${retries}): ${error.message}`, error);
 
@@ -30,46 +42,27 @@ const connectToFtp = async (client, args, retries = 3) => {
       }
 
       logWarning('🥹 Retrying connection...');
+      await delay(3000)
     }
   }
 };
 
 async function disconnectFromFtp(client) {
-  // if (noopInterval) {
-  //   stopKeepAlive(noopInterval);
-  // }
+  if (noopInterval) {
+    clearInterval(noopInterval);
+  }
+
   client.close();
+
   logInfo('📂 Disconnected from FTP server.');
 }
 
-// function startKeepAlive(client, interval = 20000) {
-//   logInfo('🟢 Starting keep-alive (NOOP)...');
-//   return setInterval(async () => {
-//     try {
-//       logInfo('🔄 Sending NOOP...');
-//       await safeFtpOperation(client, async (ftpClient) => {
-//         await ftpClient.send("NOOP");
-//       });
-//     } catch (error) {
-//       logWarning(`⚠️ Failed to send NOOP: ${error.message}`);
-//     }
-//   }, interval);
-// }
-
-// function stopKeepAlive(noopInterval) {
-//   clearInterval(noopInterval);
-//   logInfo('🔴 Stopping keep-alive (NOOP).');
-// }
-
-// let ftpTaskQueue = Promise.resolve(); // Fronta úloh
-
 async function safeFtpOperation(client, operation, retries = 4) {
   const args = getArgs();
-  let attempt = 0;
 
-  while (attempt < retries) {
+  for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      attempt++;
+      // Pokus o provedení operace
       return await operation(client);
     } catch (error) {
       if (
@@ -79,16 +72,16 @@ async function safeFtpOperation(client, operation, retries = 4) {
         error.message.includes('ECONNRESET') ||
         error.message.includes('routines:ssl3_read_bytes:tlsv1 alert decode')
       ) {
-        logError(`📂😞 FTP operation failed (attempt ${attempt}): ${error}`);
+        logError(`📂😞 FTP operation failed (attempt ${attempt}/${retries}): ${error.message}`);
+
         if (attempt < retries) {
           logWarning('🥹 Reconnecting to FTP server...');
-          setTimeout(async () => {
-            await connectToFtp(client, args);
-          }, 2000)
+          await delay(2000); // Pauza před opakováním
+          await connectToFtp(client, args);
           logWarning('🥹 Retrying FTP operation...');
         } else {
           logError('📂😞😞 Maximum retry attempts reached. Failing operation.');
-          throw error;
+          throw new Error(`📂😞😞 FTP operation failed after ${retries} attempts: ${error.message}`);
         }
       } else {
         throw error;
@@ -97,12 +90,12 @@ async function safeFtpOperation(client, operation, retries = 4) {
   }
 }
 
+
 async function jumpToRoot(client) {
   try {
     await client.cd('/');
     const serverDir = getServerDir();
     await client.cd(serverDir);
-    // logInfo(`Current directory after serverDir jump: ${await client.pwd()}`);
   } catch (error) {
     logError(`Failed to jump to root: ${error.message}`, error);
     throw new Error(`Jump to root failed: ${error.message}`);

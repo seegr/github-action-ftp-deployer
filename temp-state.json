@@ -1,6 +1,139 @@
 {
-    "description": "Temporary state for in-progress sync",
+    "description": "State for tracking uploaded files and folders",
     "version": "1.0.0",
-    "generatedTime": 1733704531421,
-    "data": []
+    "generatedTime": 1733742812791,
+    "data": [
+        {
+            "type": "folder",
+            "path": "app"
+        },
+        {
+            "type": "folder",
+            "path": "app/config"
+        },
+        {
+            "type": "folder",
+            "path": "app/extensions"
+        },
+        {
+            "type": "folder",
+            "path": "app/modules"
+        },
+        {
+            "type": "folder",
+            "path": "app/modules/Admin"
+        },
+        {
+            "type": "folder",
+            "path": "app/modules/Admin/components"
+        },
+        {
+            "type": "folder",
+            "path": "app/modules/Front"
+        },
+        {
+            "type": "folder",
+            "path": "app/modules/Front/components"
+        },
+        {
+            "type": "file",
+            "path": "app/.htaccess",
+            "hash": "872661ad41e8c612b63a483965a8e87689f4d484fbdb3c9c9663ee5e9cac65e9"
+        },
+        {
+            "type": "file",
+            "path": "app/bootstrap.php",
+            "hash": "1ea4c2ba4c020b9c3c3234f814be64ee86b70495316f8f38c27aaaec0de9721d"
+        },
+        {
+            "type": "file",
+            "path": "app/config/contact.neon",
+            "hash": "07a4438891965279c0615750eea835d50c80fad251a4e34feffb454683dd0c65"
+        },
+        {
+            "type": "file",
+            "path": "app/config/database.local.example.neon",
+            "hash": "8a3af8b1fe9a8628c112c0041844fe8ae88e30216b7ff32ca6701bb55ee7afe9"
+        },
+        {
+            "type": "file",
+            "path": "app/config/database.local.neon",
+            "hash": "d22721ebc3552f5c33cc6aee523a0ccd1fa3a4ba15b251e5f75cbdd92ff77e94"
+        },
+        {
+            "type": "file",
+            "path": "app/config/keys.neon",
+            "hash": "fce7d0dc0049449270ba3ce40fbead045d3fa67a648944ced181033e36ed8335"
+        },
+        {
+            "type": "file",
+            "path": "app/config/links.neon",
+            "hash": "a05913a0815301e35fa058c4ac6d093b17209f4b64adc4980de24abcf2542868"
+        },
+        {
+            "type": "file",
+            "path": "app/config/mail.local.neon",
+            "hash": "9f172a7e73da809c9d9a280b88367bf74a0cdec9a6df3852963449a3b550dd26"
+        },
+        {
+            "type": "file",
+            "path": "app/config/mail.neon",
+            "hash": "a07e64a814347ec05150f66a5f5f50560a21f4eeaa2a738161122e4ce5f2e7a9"
+        },
+        {
+            "type": "file",
+            "path": "app/config/main.neon",
+            "hash": "c72e6fae5673b82716d567ea7fe2fc2fc66a5826a346306d30d974d0a0d5bbe5"
+        },
+        {
+            "type": "file",
+            "path": "app/config/search.neon",
+            "hash": "87dc029b4b9a2e79a9589871822615784c6991a57f6a2030e6c46faf4570595b"
+        },
+        {
+            "type": "file",
+            "path": "app/config/services.neon",
+            "hash": "8cea0b33a913bcae8169d91d09d53a081d1f9b0810ac9c154a7fb3c5f9badbe2"
+        },
+        {
+            "type": "file",
+            "path": "app/config/social.neon",
+            "hash": "e9bf3fd3a9785b93b88c6394515a22c6d0e5e534f6d4c8f2d05b12475911641e"
+        },
+        {
+            "type": "file",
+            "path": "app/config/storage.neon",
+            "hash": "e27422eb82354bb68a008e8012773d40707f04106be54dfd6445c18ccebd979a"
+        },
+        {
+            "type": "file",
+            "path": "app/config/translation.neon",
+            "hash": "624ea9fef2700f7c6d98a7c4aaff13bd23f2cda837b691891506fb81e8bb9ba5"
+        },
+        {
+            "type": "file",
+            "path": "app/config/vite.local.neon",
+            "hash": "601b1a684e08c912dd276e0f569f55a8ab5b240254fc8fb0d0f4f94eab5c9366"
+        },
+        {
+            "type": "file",
+            "path": "app/config/vite.neon",
+            "hash": "3ea335bc1fd5453a7a9b03117c04589d7a5e3796d2019472429618b07f3af345"
+        },
+        {
+            "type": "file",
+            "path": "app/extensions/DdevDatabaseExtension.php",
+            "hash": "2e34b1548b38c77f53cf4eb904bc95136230e5bd8003c228a996468181adde1b"
+        },
+        {
+            "type": "file",
+            "path": "app/modules/Admin/components/qweq.txt",
+            "hash": "6208617e046314dbc060ff193ff60936c21d9bedc1f32db977a79d811ead9176"
+        },
+        {
+            "type": "file",
+            "path": "app/modules/Front/components/sfdsfs.txt",
+            "hash": "b139d3f9cbadd1a8a54503145b4ec2086179403323a21d089af73add19d5eab8"
+        }
+    ]
 }
