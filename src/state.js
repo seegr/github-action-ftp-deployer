@@ -202,9 +202,11 @@ const initUploadsFromStates = async (client) => {
   try {
     const serverStatePath = getServerStatePath();
     logText(`Downloading server state from: ${serverStatePath}`);
+
     await safeFtpOperation(client, async (ftpClient) => {
       await ftpClient.downloadTo(tempStatePath, serverStatePath);
     });
+
     logSuccess('Server state downloaded successfully.');
     serverState = JSON.parse(fs.readFileSync(tempStatePath, 'utf8'));
   } catch (error) {
@@ -243,7 +245,7 @@ const initUploadsFromStates = async (client) => {
   });
 
   // Uložení dočasného state pro pozdější aktualizace
-  tempState.data = [];
+  const tempState = serverState;
   fs.writeFileSync(getTempStatePath(), JSON.stringify(tempState, null, 4), 'utf8');
 
   return toUpload;
