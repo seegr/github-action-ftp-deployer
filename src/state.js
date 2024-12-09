@@ -8,13 +8,6 @@ const {getRootPath, getLocalDir, getServerDir, getLocalStatePath, getServerState
 const {getArgs} = require("./store");
 const { jsonToConsole, normalizePath, getServerFullPath} = require("./utils")
 
-const tempState = {
-  description: "Temporary state for in-progress sync",
-  version: "1.0.0",
-  generatedTime: new Date().getTime(),
-  data: [],
-};
-
 const isExcluded = (filePath, excludePatterns) => {
   const normalizedPath = normalizePath(filePath);
   return excludePatterns.some((pattern) =>
@@ -32,6 +25,7 @@ const prepareExcludePatterns = (excludeArg) => {
 };
 
 async function updateTempState(item) {
+  const tempState = JSON.parse(fs.readFileSync(getTempStatePath(), 'utf8'));
   tempState.data.push(item);
   tempState.generatedTime = new Date().getTime();
 
