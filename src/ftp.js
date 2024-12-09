@@ -71,7 +71,8 @@ async function safeFtpOperation(client, operation, retries = 4) {
         error.message.includes('Client is closed') ||
         error.message.includes('socket disconnected') ||
         error.message.includes('User launched a task') ||
-        error.message.includes('ECONNRESET')
+        error.message.includes('ECONNRESET') ||
+        error.message.includes('routines:ssl3_read_bytes:tlsv1 alert decode')
       ) {
         logError(`📂😞 FTP operation failed (attempt ${attempt}): ${error}`);
         if (attempt < retries) {

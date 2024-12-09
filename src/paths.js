@@ -1,12 +1,13 @@
 const { getArgs } = require('./store');
 const path = require("path");
+const {normalizePath} = require("./utils");
 
 const getRootPath = () => process.cwd()
 
 const getLocalStatePath = () => {
   const args = getArgs()
 
-  return `${getRootPath()}/${args.localDir}/${args.stateName}`
+  return normalizePath(`${getRootPath()}/${args.localDir}/${args.stateName}`)
 }
 
 const getServerDir = () => {

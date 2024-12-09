@@ -218,7 +218,6 @@ const initUploadsFromStates = async (client) => {
   };
 
   // logInfo(`serverState: ${jsonToConsole(serverState)}`)
-
   const serverPaths = new Set(serverState.data.map((item) => normalizePath(item.path)));
   const localPaths = localState.data;
   logInfo(`serverPaths: ${jsonToConsole(Array.from(serverPaths))}`);
