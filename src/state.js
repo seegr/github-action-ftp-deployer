@@ -70,7 +70,7 @@ const updateState = async (client, localStatePath) => {
 
   try {
     await jumpToRoot(client);
-    logInfo(`Updating state file on server`);
+    logText(`Updating state file on server`);
 
     await safeFtpOperation(client, async (ftpClient) => {
       await ftpClient.uploadFrom(localStatePath, serverStatePath);
