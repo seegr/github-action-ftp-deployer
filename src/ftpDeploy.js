@@ -3,7 +3,7 @@ const fs = require('fs');
 const ftp = require('basic-ftp');
 const { logText, logInfo, logWarning, logAlert} = require('./logger');
 const { prepareUploads, processWithFlush} = require('./deploy');
-const { connectToFtp, disconnectFromFtp } = require('./ftp');
+const { connectToFtp, disconnectFromFtp, safeFtpOperation, jumpToRoot} = require('./ftp');
 const { setLocalState, initUploadsFromStates } = require('./state')
 
 const { setArgs } = require('./store');
@@ -30,8 +30,11 @@ async function deploy(args) {
   try {
     logInfo('Nazdárek 🖖💩 ... tak jdeme na to!')
 
-    await connectToFtp(client, args);
-    await client.ensureDir(args.serverDir);
+    await safeFtpOperation(client, async (ftpClient) => {
+      await connectToFtp(client, args);
+      await ftpClient.ensureDir(args.serverDir);
+    });
+
     await setLocalState()
     const toUpload = await initUploadsFromStates(client, args);
 

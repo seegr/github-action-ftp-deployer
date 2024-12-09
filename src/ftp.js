@@ -25,8 +25,18 @@ async function keepConnectionAlive(client, interval = 30000) {
   }, interval);
 }
 
+const stopKeepAlive = () => {
+  if (noopInterval) {
+    clearInterval(noopInterval);
+    noopInterval = null;
+    logInfo('✅ NOOP interval stopped.');
+  }
+};
+
 
 const connectToFtp = async (client, args, retries = 3) => {
+  stopKeepAlive()
+
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       logText(`📂 Connecting to FTP server (attempt ${attempt}/${retries})...`);
