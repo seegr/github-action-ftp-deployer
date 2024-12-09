@@ -224,7 +224,7 @@ const initUploadsFromStates = async (client) => {
 
   const serverPaths = new Set(serverState.data.map((item) => normalizePath(item.path)));
   const localPaths = localState.data;
-  // logInfo(`serverPaths: ${jsonToConsole(Array.from(serverPaths))}`);
+  logInfo(`serverPaths: ${jsonToConsole(Array.from(serverPaths))}`);
 
   localPaths.filter((item) => item.type === 'folder').forEach((folder) => {
     // logInfo(`folder: ${folder.path}`)
