@@ -9,7 +9,7 @@ async function keepConnectionAlive(client, interval = 30000) {
 
   noopInterval = setInterval(async () => {
     try {
-      logText('🔄 Sending NOOP to keep connection alive...');
+      // logText('🔄 Sending NOOP to keep connection alive...');
       if (!client.closed) {
         await safeFtpOperation(client, async (ftpClient) => {
           await ftpClient.send('NOOP');
@@ -28,7 +28,6 @@ const stopKeepAlive = () => {
   if (noopInterval) {
     clearInterval(noopInterval);
     noopInterval = null;
-    logInfo('✅ NOOP interval stopped.');
   }
 };
 

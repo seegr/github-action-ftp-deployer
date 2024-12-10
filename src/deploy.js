@@ -57,7 +57,7 @@ const processWithFlush = async (client, toUpload) => {
   const uploadFile = async (file) => {
     const localPath = path.join(getRootPath(), getLocalDir(), file.path);
     const remotePath = normalizePath(`${getServerDir()}/${file.path}`)
-    logInfo(`📄 Uploading file: ${localPath}`);
+    // logInfo(`📄 Uploading file: ${localPath}`);
     // logInfo(`📄 Uploading file: ${localPath} -> ${remotePath}`);
 
     await safeFtpOperation(client, async (ftpClient) => {
